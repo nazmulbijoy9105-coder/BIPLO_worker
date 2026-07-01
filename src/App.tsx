@@ -9,6 +9,7 @@ import {
 
 import Header from "./components/Header";
 import FeedbackModal from "./components/FeedbackModal";
+import FaqSection from "./components/FaqSection";
 import { generatePdfFromMarkdown } from "./utils/pdfGenerator";
 import { 
   TRADE_COURSES, LANGUAGE_COURSES, COUNTRIES, SUCCESS_STORIES, 
@@ -870,6 +871,9 @@ export default function App() {
                 </button>
               </div>
             </div>
+
+            {/* Frequently Asked Questions */}
+            <FaqSection />
 
           </div>
         )}
