@@ -105,6 +105,7 @@ export default function App() {
   const [verificationInput, setVerificationInput] = useState<string>("");
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [hasSearchedCert, setHasSearchedCert] = useState<boolean>(false);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   // Job Application List (Simulated)
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
@@ -450,8 +451,16 @@ export default function App() {
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://biplo-worker.vercel.app")}`;
       }
       
-      window.open(shareUrl, "_blank", "width=600,height=400");
-      alert(`Success Story Details & BIPLOB Info Copied to Clipboard!\n\nWe've opened the share window for you. Feel free to paste (Ctrl+V) the pre-written story into your post.`);
+      try {
+        window.open(shareUrl, "_blank", "width=600,height=400");
+      } catch (openErr) {
+        console.warn("Popup blocked by browser sandbox");
+      }
+      
+      setShareMessage(`Story details copied to clipboard! Paste (Ctrl+V) directly into your ${platform === "facebook" ? "Facebook" : "LinkedIn"} post.`);
+      setTimeout(() => {
+        setShareMessage(null);
+      }, 5000);
     }).catch(err => {
       console.error("Could not copy share content: ", err);
       // Fallback behavior if clipboard write is blocked
@@ -461,13 +470,29 @@ export default function App() {
       } else if (platform === "linkedin") {
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://biplo-worker.vercel.app")}`;
       }
-      window.open(shareUrl, "_blank", "width=600,height=400");
+      try {
+        window.open(shareUrl, "_blank", "width=600,height=400");
+      } catch (openErr) {
+        console.warn("Popup blocked by browser sandbox");
+      }
+      setShareMessage(`Sharing on ${platform === "facebook" ? "Facebook" : "LinkedIn"}...`);
+      setTimeout(() => {
+        setShareMessage(null);
+      }, 3000);
     });
   };
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] font-sans antialiased selection:bg-[#B8860B]/20 selection:text-[#1A1A1A]" id="biplob-app-root">
       
+      {/* Dynamic Editorial Toast Notification */}
+      {shareMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-black text-[#FAF9F6] border-2 border-[#B8860B] px-6 py-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-xs font-bold uppercase tracking-widest flex items-center space-x-3 rounded-none animate-bounce" id="biplob-toast-notification">
+          <CheckCircle2 className="w-5 h-5 text-[#B8860B] shrink-0 animate-pulse" />
+          <span>{shareMessage}</span>
+        </div>
+      )}
+
       {/* Editorial Header */}
       <Header 
         currentRole={currentRole}

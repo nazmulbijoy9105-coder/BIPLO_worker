@@ -23,11 +23,11 @@ export default function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const rolesList: { value: UserRole; label: string; icon: React.ReactNode }[] = [
-    { value: "student", label: "Student Portal", icon: <GraduationCap className="w-4 h-4 text-blue-600" /> },
-    { value: "trainer", label: "Trainer Portal", icon: <User className="w-4 h-4 text-emerald-600" /> },
-    { value: "employer", label: "Employer Portal", icon: <Briefcase className="w-4 h-4 text-indigo-600" /> },
-    { value: "partner", label: "Licensed Recruiter", icon: <Landmark className="w-4 h-4 text-amber-600" /> },
-    { value: "admin", label: "Admin Console", icon: <Shield className="w-4 h-4 text-rose-600" /> },
+    { value: "student", label: "Student Portal", icon: <GraduationCap className="w-4 h-4 text-[#B8860B]" /> },
+    { value: "trainer", label: "Trainer Portal", icon: <User className="w-4 h-4 text-[#B8860B]" /> },
+    { value: "employer", label: "Employer Portal", icon: <Briefcase className="w-4 h-4 text-[#B8860B]" /> },
+    { value: "partner", label: "Licensed Recruiter", icon: <Landmark className="w-4 h-4 text-[#B8860B]" /> },
+    { value: "admin", label: "Admin Console", icon: <Shield className="w-4 h-4 text-[#B8860B]" /> },
   ];
 
   const getRoleLabel = (role: UserRole) => {
@@ -44,20 +44,20 @@ export default function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-xs" id="biplob-main-header">
+    <header className="sticky top-0 z-50 bg-white border-b-2 border-black" id="biplob-main-header">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           
           {/* Logo */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab("home")}>
-            <div className="flex items-center justify-center w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-700 text-white rounded-xl shadow-md shadow-blue-500/20">
-              <Globe className="w-6 h-6 animate-pulse" />
+            <div className="flex items-center justify-center w-11 h-11 bg-black text-[#B8860B] border border-black shadow-[2px_2px_0px_0px_rgba(184,134,11,1)]">
+              <Globe className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <span className="text-2xl font-black tracking-tight text-gray-900 bg-clip-text">
+              <span className="text-xl font-black tracking-tight text-black">
                 BIPLOB
               </span>
-              <p className="text-[10px] font-semibold text-gray-400 tracking-wider uppercase -mt-1">
+              <p className="text-[9px] font-bold text-[#B8860B] tracking-wider uppercase -mt-1">
                 Skills Beyond Borders
               </p>
             </div>
@@ -73,10 +73,10 @@ export default function Header({
                   setActiveTab(item.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 ${
+                className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all duration-150 rounded-none border ${
                   activeTab === item.id
-                    ? "text-blue-600 bg-blue-50/70 font-semibold"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    ? "text-white bg-black border-black"
+                    : "text-black hover:text-[#B8860B] hover:bg-[#FAF9F6] border-transparent"
                 }`}
               >
                 {item.label}
@@ -91,17 +91,17 @@ export default function Header({
               <button
                 id="portal-switcher-btn"
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center space-x-2 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                className="flex items-center space-x-2 px-3 py-2 border-2 border-black text-xs font-bold uppercase tracking-wider hover:bg-[#FAF9F6] transition-colors text-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span className="w-2 h-2 rounded-none bg-[#B8860B] animate-pulse"></span>
                 <span>{getRoleLabel(currentRole)}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
+                <ChevronDown className="w-4 h-4 text-black" />
               </button>
 
               {roleMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-xl z-50 py-1 divide-y divide-gray-50">
-                  <div className="px-4 py-2">
-                    <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider block">
+                <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50 py-1 divide-y divide-black/10 rounded-none">
+                  <div className="px-4 py-2 bg-[#FAF9F6]">
+                    <span className="text-[9px] text-black/50 font-bold uppercase tracking-widest block">
                       Explore Workspace
                     </span>
                   </div>
@@ -119,10 +119,10 @@ export default function Header({
                           if (role.value === "partner") setActiveTab("partner-dash");
                           if (role.value === "admin") setActiveTab("admin-dash");
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm flex items-center space-x-3 transition-colors ${
+                        className={`w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-wide flex items-center space-x-3 transition-colors rounded-none ${
                           currentRole === role.value
-                            ? "bg-blue-50 text-blue-700 font-medium"
-                            : "text-gray-700 hover:bg-gray-50"
+                            ? "bg-black text-white"
+                            : "text-black hover:bg-[#FAF9F6] hover:text-[#B8860B]"
                         }`}
                       >
                         {role.icon}
@@ -138,10 +138,10 @@ export default function Header({
             <button
               id="header-auth-btn"
               onClick={onLoginToggle}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-2 border-black rounded-none transition-all ${
                 isLoggedIn
-                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/10"
+                  ? "bg-[#FAF9F6] text-black hover:bg-black hover:text-white"
+                  : "bg-[#B8860B] hover:bg-black text-white hover:text-[#B8860B] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
               }`}
             >
               {isLoggedIn ? "Logout Profile" : "Register / Sign In"}
@@ -157,16 +157,16 @@ export default function Header({
                 if (currentRole === "student") setActiveTab("employer-dash");
                 else setActiveTab("student-dash");
               }}
-              className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg"
+              className="text-[9px] font-bold uppercase tracking-wider text-[#B8860B] bg-black px-2.5 py-1.5 border border-black rounded-none"
             >
               Role: {currentRole.toUpperCase()}
             </button>
             <button
               id="mobile-menu-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-600 p-2 hover:bg-gray-50 rounded-lg"
+              className="text-black p-2 hover:bg-[#FAF9F6] border-2 border-black rounded-none"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
 
@@ -175,7 +175,7 @@ export default function Header({
 
       {/* Mobile Menu drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-6 space-y-3 shadow-lg" id="mobile-navigation-drawer">
+        <div className="lg:hidden bg-white border-t-2 border-black px-4 pt-2 pb-6 space-y-4 shadow-lg" id="mobile-navigation-drawer">
           <div className="space-y-1">
             {navItems.map((item) => (
               <button
@@ -185,10 +185,10 @@ export default function Header({
                   setActiveTab(item.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium ${
+                className={`w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-widest border-b border-black/5 ${
                   activeTab === item.id
-                    ? "text-blue-600 bg-blue-50"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "text-[#B8860B] bg-black/5 border-l-4 border-l-[#B8860B]"
+                    : "text-black hover:bg-[#FAF9F6]"
                 }`}
               >
                 {item.label}
@@ -196,8 +196,8 @@ export default function Header({
             ))}
           </div>
 
-          <div className="border-t border-gray-100 pt-4 space-y-3">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block px-4">
+          <div className="border-t border-black/10 pt-4 space-y-3">
+            <span className="text-[10px] font-bold text-black/50 uppercase tracking-widest block px-4">
               Switch Roles / Portals
             </span>
             <div className="grid grid-cols-2 gap-2 px-2">
@@ -214,10 +214,10 @@ export default function Header({
                     if (role.value === "partner") setActiveTab("partner-dash");
                     if (role.value === "admin") setActiveTab("admin-dash");
                   }}
-                  className={`px-3 py-2 text-xs font-medium rounded-lg border text-left flex items-center space-x-2 ${
+                  className={`px-3 py-2 text-[10px] font-bold uppercase border-2 border-black text-left flex items-center space-x-2 rounded-none transition-all ${
                     currentRole === role.value
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-100 bg-gray-50/50 text-gray-700"
+                      ? "bg-black text-[#B8860B] border-black"
+                      : "bg-white text-black border-black/15"
                   }`}
                 >
                   {role.icon}
@@ -232,7 +232,7 @@ export default function Header({
                 onLoginToggle();
                 setMobileMenuOpen(false);
               }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow-xs"
+              className="w-full bg-[#B8860B] hover:bg-black text-white hover:text-[#B8860B] font-bold uppercase text-xs tracking-wider py-3 border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
             >
               {isLoggedIn ? "Logout Profile" : "Register / Sign In"}
             </button>

@@ -105,6 +105,26 @@ export function generatePdfFromMarkdown(
     }
   };
 
+  // Helper to render text supporting inline markdown bolding (**text**)
+  const renderTextWithInlineBold = (text: string, x: number, y: number) => {
+    if (text.includes("**")) {
+      const parts = text.split("**");
+      let currentX = x;
+      for (let k = 0; k < parts.length; k++) {
+        const isBold = k % 2 === 1;
+        doc.setFont("helvetica", isBold ? "bold" : "normal");
+        doc.setTextColor(isBold ? 17 : 40, isBold ? 17 : 40, isBold ? 17 : 40);
+        
+        doc.text(parts[k], currentX, y);
+        currentX += doc.getTextWidth(parts[k]);
+      }
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(40, 40, 40);
+      doc.text(text, x, y);
+    }
+  };
+
   // Parse lines of Markdown
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -177,9 +197,9 @@ export function generatePdfFromMarkdown(
           // Draw a small bullet circle or square
           doc.setFillColor(184, 134, 11);
           doc.rect(marginX + 1, currentY - 2.5, 1.5, 1.5, "F");
-          doc.text(wrappedLines[j], marginX + 6, currentY);
+          renderTextWithInlineBold(wrappedLines[j], marginX + 6, currentY);
         } else {
-          doc.text(wrappedLines[j], marginX + 6, currentY);
+          renderTextWithInlineBold(wrappedLines[j], marginX + 6, currentY);
         }
         currentY += 5.5;
       }
@@ -199,10 +219,12 @@ export function generatePdfFromMarkdown(
       for (let j = 0; j < wrappedLines.length; j++) {
         checkPageSpace(5.5);
         if (j === 0) {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(40, 40, 40);
           doc.text(`${num}.`, marginX, currentY);
-          doc.text(wrappedLines[j], marginX + 6, currentY);
+          renderTextWithInlineBold(wrappedLines[j], marginX + 6, currentY);
         } else {
-          doc.text(wrappedLines[j], marginX + 6, currentY);
+          renderTextWithInlineBold(wrappedLines[j], marginX + 6, currentY);
         }
         currentY += 5.5;
       }
@@ -217,23 +239,7 @@ export function generatePdfFromMarkdown(
     const wrappedLines: string[] = doc.splitTextToSize(line, maxLineWidth);
     for (let j = 0; j < wrappedLines.length; j++) {
       checkPageSpace(5.5);
-      
-      const textLine = wrappedLines[j];
-      if (textLine.includes("**")) {
-        const parts = textLine.split("**");
-        let currentX = marginX;
-        for (let k = 0; k < parts.length; k++) {
-          const isBold = k % 2 === 1;
-          doc.setFont("helvetica", isBold ? "bold" : "normal");
-          doc.setTextColor(isBold ? 17 : 40, isBold ? 17 : 40, isBold ? 17 : 40);
-          
-          // Draw part of text
-          doc.text(parts[k], currentX, currentY);
-          currentX += doc.getTextWidth(parts[k]);
-        }
-      } else {
-        doc.text(textLine, marginX, currentY);
-      }
+      renderTextWithInlineBold(wrappedLines[j], marginX, currentY);
       currentY += 5.5;
     }
   }
