@@ -64,6 +64,7 @@ export default function App() {
   });
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
   const [assessmentLoading, setAssessmentLoading] = useState<boolean>(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
 
   // AI Resume Builder State
   const [resumeForm, setResumeForm] = useState({
@@ -79,6 +80,7 @@ export default function App() {
   });
   const [resumeResult, setResumeResult] = useState<{ resumeMarkdown: string; coverLetterMarkdown: string } | null>(null);
   const [resumeLoading, setResumeLoading] = useState<boolean>(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
 
   // Online Learning System (LMS) State
   const [activeCourseId, setActiveCourseId] = useState<string>("course-1");
@@ -169,11 +171,20 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg, history: chatHistory })
       });
+      if (!res.ok) {
+        throw new Error(`Failed to contact BIPLOB AI Chat. Server returned status ${res.status}.`);
+      }
       const data = await res.json();
-      setChatHistory(prev => [...prev, { role: "model", content: data.text }]);
-    } catch (err) {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      setChatHistory(prev => [...prev, { role: "model", content: data.text || "I was unable to formulate a response. Please ask another question!" }]);
+    } catch (err: any) {
       console.error(err);
-      setChatHistory(prev => [...prev, { role: "model", content: "Something went wrong. Please check your internet connection and try again." }]);
+      setChatHistory(prev => [...prev, { 
+        role: "model", 
+        content: `⚠️ **AI Service Latency Notice**: ${err.message || "We are currently experiencing heavy traffic on our skills-coaching API. Please retry your question or consult our handbook sections below."}` 
+      }]);
     } finally {
       setChatLoading(false);
     }
@@ -185,6 +196,7 @@ export default function App() {
   const submitCareerAssessment = async () => {
     setAssessmentLoading(true);
     setAssessmentResult(null);
+    setAssessmentError(null);
 
     try {
       const res = await fetch("/api/career-assessment", {
@@ -192,7 +204,13 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(assessmentForm)
       });
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status} during profile profiling.`);
+      }
       const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
       setAssessmentResult(data);
       
       // Update profile score based on AI output
@@ -200,8 +218,9 @@ export default function App() {
         ...prev,
         eligibilityScore: data.estimatedTimelineMonths ? Math.min(100, Math.max(50, 95 - data.estimatedTimelineMonths * 3)) : 80
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setAssessmentError(err.message || "An unexpected error occurred while analyzing your training timeline. Please try again.");
     } finally {
       setAssessmentLoading(false);
     }
@@ -214,6 +233,7 @@ export default function App() {
     e.preventDefault();
     setResumeLoading(true);
     setResumeResult(null);
+    setResumeError(null);
 
     try {
       const res = await fetch("/api/resume-builder", {
@@ -221,10 +241,17 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resumeForm)
       });
+      if (!res.ok) {
+        throw new Error(`Server returned HTTP ${res.status} while compiling resume markdown files.`);
+      }
       const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
       setResumeResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setResumeError(err.message || "Failed to formulate CV layout files. Please verify input characters and try again.");
     } finally {
       setResumeLoading(false);
     }
@@ -990,6 +1017,35 @@ export default function App() {
               )}
             </button>
 
+            {assessmentError && (
+              <div className="mt-6 border-2 border-red-500 bg-red-50/10 p-5 space-y-3" id="assessment-error-banner">
+                <div className="flex items-start space-x-2.5 text-red-700">
+                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-black">AI Calculation Interrupted</h4>
+                    <p className="text-[9px] text-red-600 uppercase font-mono mt-0.5">Latency or Connection Threshold Breached</p>
+                  </div>
+                </div>
+                <p className="text-xs text-black/75 font-serif leading-relaxed italic">
+                  "{assessmentError}"
+                </p>
+                <div className="pt-1 flex gap-2">
+                  <button
+                    onClick={submitCareerAssessment}
+                    className="bg-black hover:bg-black/90 text-white font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 transition-all"
+                  >
+                    Retry Calculation Now
+                  </button>
+                  <button
+                    onClick={() => setAssessmentError(null)}
+                    className="border border-black/20 hover:bg-black/5 text-black font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 transition-all"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* ASSESSMENT RESULTS RENDER */}
             {assessmentResult && (
               <div className="mt-12 pt-8 border-t-2 border-black space-y-8" id="assessment-result-card">
@@ -1229,7 +1285,34 @@ export default function App() {
                 <div>
                   <span className="text-xs font-bold uppercase text-black/40 tracking-wider block mb-4">Employer-Ready Previews</span>
                   
-                  {resumeResult ? (
+                  {resumeError ? (
+                    <div className="border-2 border-red-500 bg-white p-6 space-y-4" id="resume-error-banner">
+                      <div className="flex items-start space-x-2.5 text-red-700">
+                        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-black">Drafting Engine Offline</h4>
+                          <p className="text-[9px] text-red-600 uppercase font-mono mt-0.5">API Compilation Error</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-black/75 font-serif leading-relaxed italic">
+                        "{resumeError}"
+                      </p>
+                      <div className="pt-1 flex gap-2">
+                        <button
+                          onClick={(e) => submitResumeBuilder(e)}
+                          className="bg-black hover:bg-black/90 text-white font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 transition-all"
+                        >
+                          Retry Generation
+                        </button>
+                        <button
+                          onClick={() => setResumeError(null)}
+                          className="border border-black/20 hover:bg-black/5 text-black font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 transition-all"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  ) : resumeResult ? (
                     <div className="space-y-6">
                       <div className="bg-white border border-black/10 p-6 shadow-sm max-h-[420px] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
