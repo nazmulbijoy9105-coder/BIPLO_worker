@@ -3,11 +3,13 @@ import {
   Globe, GraduationCap, Search, Award, MapPin, Briefcase, Clock, 
   ArrowRight, User, BookOpen, Sparkles, TrendingUp, Coins, 
   ShieldCheck, CheckCircle2, X, ChevronRight, FileText, Send, 
-  Plus, Check, Loader2, Building, Users, QrCode, AlertTriangle 
+  Plus, Check, Loader2, Building, Users, QrCode, AlertTriangle,
+  Download, Facebook, Linkedin
 } from "lucide-react";
 
 import Header from "./components/Header";
 import FeedbackModal from "./components/FeedbackModal";
+import { generatePdfFromMarkdown } from "./utils/pdfGenerator";
 import { 
   TRADE_COURSES, LANGUAGE_COURSES, COUNTRIES, SUCCESS_STORIES, 
   JOBS, MOCK_LESSONS, MOCK_CERTIFICATES 
@@ -434,6 +436,34 @@ export default function App() {
     return matchCountry && matchTrade;
   });
 
+  // Share Individual Success Stories on Facebook or LinkedIn
+  const handleShareStory = (story: any, platform: "facebook" | "linkedin") => {
+    const text = `Inspiring success story from BIPLOB Skills Academy! 🌍\n\nMeet ${story.studentName} from ${story.homeDistrict}, who successfully transitioned to ${story.country} as a certified ${story.trade}, now earning a remittance salary of ${story.salary}.\n\nBIPLOB empowers Bangladesh's workforce with world-class certified trade training, intensive language academy coaching, and verified global employer pathways.\n\nLearn more and build your global career roadmap today: https://biplo-worker.vercel.app`;
+    
+    // Copy the pre-filled post text to clipboard for ultimate reliability across platforms
+    navigator.clipboard.writeText(text).then(() => {
+      let shareUrl = "";
+      if (platform === "facebook") {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://biplo-worker.vercel.app")}&quote=${encodeURIComponent(text)}`;
+      } else if (platform === "linkedin") {
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://biplo-worker.vercel.app")}`;
+      }
+      
+      window.open(shareUrl, "_blank", "width=600,height=400");
+      alert(`Success Story Details & BIPLOB Info Copied to Clipboard!\n\nWe've opened the share window for you. Feel free to paste (Ctrl+V) the pre-written story into your post.`);
+    }).catch(err => {
+      console.error("Could not copy share content: ", err);
+      // Fallback behavior if clipboard write is blocked
+      let shareUrl = "";
+      if (platform === "facebook") {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://biplo-worker.vercel.app")}`;
+      } else if (platform === "linkedin") {
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://biplo-worker.vercel.app")}`;
+      }
+      window.open(shareUrl, "_blank", "width=600,height=400");
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#1A1A1A] font-sans antialiased selection:bg-[#B8860B]/20 selection:text-[#1A1A1A]" id="biplob-app-root">
       
@@ -793,9 +823,28 @@ export default function App() {
                         <span className="font-bold uppercase text-[#B8860B]">Remittance Salary:</span>
                         <span className="font-mono font-bold text-[#B8860B]">{story.salary}</span>
                       </div>
-                      <div className="pt-2 border-t border-black/5 text-[10px] uppercase font-bold text-green-700 tracking-wider flex items-center space-x-1">
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{story.achievement}</span>
+                      <div className="pt-2 border-t border-black/5 flex items-center justify-between text-[10px] uppercase font-bold tracking-wider">
+                        <div className="text-green-700 flex items-center space-x-1">
+                          <Check className="w-3.5 h-3.5 shrink-0" />
+                          <span>{story.achievement}</span>
+                        </div>
+                        <div className="flex items-center space-x-1.5" id={`share-story-${story.id}`}>
+                          <span className="text-[9px] font-mono text-black/40 normal-case font-normal">Share:</span>
+                          <button
+                            onClick={() => handleShareStory(story, "linkedin")}
+                            className="p-1 hover:bg-black/5 border border-black/10 hover:border-black/30 transition-all flex items-center justify-center"
+                            title="Share on LinkedIn"
+                          >
+                            <Linkedin className="w-3.5 h-3.5 text-[#0077B5]" />
+                          </button>
+                          <button
+                            onClick={() => handleShareStory(story, "facebook")}
+                            className="p-1 hover:bg-black/5 border border-black/10 hover:border-black/30 transition-all flex items-center justify-center"
+                            title="Share on Facebook"
+                          >
+                            <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1317,15 +1366,34 @@ export default function App() {
                       <div className="bg-white border border-black/10 p-6 shadow-sm max-h-[420px] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
                           <span className="text-xs font-bold uppercase text-[#B8860B]">Generated Curriculum Vitae</span>
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText(resumeResult.resumeMarkdown);
-                              alert("CV copied to clipboard!");
-                            }}
-                            className="text-[10px] font-bold uppercase border border-black/20 px-2 py-1 hover:bg-black hover:text-white transition-all"
-                          >
-                            Copy Markdown
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(resumeResult.resumeMarkdown);
+                                alert("CV copied to clipboard!");
+                              }}
+                              className="text-[10px] font-bold uppercase border border-black/20 px-2.5 py-1 hover:bg-black hover:text-white transition-all"
+                            >
+                              Copy Markdown
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const safeName = resumeForm.fullName.trim() || "Candidate";
+                                const filename = `${safeName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_cv.pdf`;
+                                generatePdfFromMarkdown(
+                                  "Curriculum Vitae",
+                                  resumeResult.resumeMarkdown,
+                                  filename,
+                                  resumeForm.fullName || undefined,
+                                  resumeForm.targetCountry || undefined
+                                );
+                              }}
+                              className="text-[10px] font-bold uppercase border border-black/20 bg-black text-white px-2.5 py-1 hover:bg-black/80 transition-all flex items-center space-x-1"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Download PDF</span>
+                            </button>
+                          </div>
                         </div>
                         <pre className="text-[11px] font-mono whitespace-pre-wrap leading-relaxed text-black/85">
                           {resumeResult.resumeMarkdown}
@@ -1335,15 +1403,34 @@ export default function App() {
                       <div className="bg-white border border-black/10 p-6 shadow-sm max-h-[220px] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
                           <span className="text-xs font-bold uppercase text-[#B8860B]">Targeted Cover Letter</span>
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText(resumeResult.coverLetterMarkdown);
-                              alert("Cover Letter copied to clipboard!");
-                            }}
-                            className="text-[10px] font-bold uppercase border border-black/20 px-2 py-1 hover:bg-black hover:text-white transition-all"
-                          >
-                            Copy Letter
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(resumeResult.coverLetterMarkdown);
+                                alert("Cover Letter copied to clipboard!");
+                              }}
+                              className="text-[10px] font-bold uppercase border border-black/20 px-2.5 py-1 hover:bg-black hover:text-white transition-all"
+                            >
+                              Copy Letter
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const safeName = resumeForm.fullName.trim() || "Candidate";
+                                const filename = `${safeName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_cover_letter.pdf`;
+                                generatePdfFromMarkdown(
+                                  "Cover Letter",
+                                  resumeResult.coverLetterMarkdown,
+                                  filename,
+                                  resumeForm.fullName || undefined,
+                                  resumeForm.targetCountry || undefined
+                                );
+                              }}
+                              className="text-[10px] font-bold uppercase border border-black/20 bg-black text-white px-2.5 py-1 hover:bg-black/80 transition-all flex items-center space-x-1"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span>Download PDF</span>
+                            </button>
+                          </div>
                         </div>
                         <pre className="text-[11px] font-mono whitespace-pre-wrap leading-relaxed text-black/85">
                           {resumeResult.coverLetterMarkdown}
