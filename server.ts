@@ -317,26 +317,119 @@ The output JSON must strictly be:
 });
 
 // -------------------------------------------------------------------------
-// 4. Vite Integration & Static Assets Serving
+// 4. Training Quality Feedback API Endpoint
 // -------------------------------------------------------------------------
-async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+app.post("/api/feedback", async (req, res) => {
+  const { courseId, courseTitle, lessonId, lessonTitle, ratings, recommend, comments } = req.body;
+
+  if (!courseTitle || !ratings) {
+    return res.status(400).json({ error: "Missing required feedback fields" });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    // Generate high-quality simulated personalized response based on user inputs
+    let sentiment = "Positive";
+    const avgRating = (Number(ratings.contentClarity) + Number(ratings.quizDifficulty) + Number(ratings.instructorQuality)) / 3;
+    if (avgRating < 3.2) {
+      sentiment = "Negative";
+    } else if (avgRating < 4.2) {
+      sentiment = "Neutral";
+    }
+
+    let responseStr = `Assalamu Alaikum! Thank you for taking the time to share your insights on the "${courseTitle}" program${lessonTitle ? ` (Lesson: ${lessonTitle})` : ""}. `;
+    
+    if (avgRating >= 4) {
+      responseStr += `We are thrilled that you rated our content clarity and instructor standards at ${avgRating.toFixed(1)}/5. This is a testament to our specialized curriculum. `;
+    } else {
+      responseStr += `We appreciate your honest rating of ${avgRating.toFixed(1)}/5, which highlights areas where we can improve. `;
+    }
+
+    if (comments && comments.trim().length > 0) {
+      responseStr += `Regarding your comments: "${comments}", our Chief Training Officer will review this immediately to refine our lesson notes and simulated quiz questions. `;
+    } else {
+      responseStr += `Your input will guide our ongoing syllabus audit as we align our classes with international certification requirements for Japan, South Korea, and Germany. `;
+    }
+
+    responseStr += `We wish you the very best of luck in completing your skill goals and unlocking your digital certificate!`;
+
+    return res.json({
+      personalizedThankYou: responseStr,
+      sentiment
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`BIPLOB Platform Server running on http://localhost:${PORT}`);
-  });
+  try {
+    const ai = getGeminiClient();
+    const prompt = `You are the Director of BIPLOB Skills Academy (Global Skills & Overseas Career Platform). A student has completed a training component and submitted feedback:
+Course: ${courseTitle}
+${lessonTitle ? `Lesson: ${lessonTitle}` : ""}
+Ratings:
+- Content Clarity: ${ratings.contentClarity}/5
+- Quiz Alignment: ${ratings.quizDifficulty}/5
+- Instructor Standard: ${ratings.instructorQuality}/5
+Recommend to Others: ${recommend}
+Student Comments: "${comments || "No specific comments written."}"
+
+Please generate a professional, encouraging response in JSON format. The response should thank the student, provide specific action/mention based on their comments (if any) or course, and state how BIPLOB Academy is continually refining this specific curriculum to ensure high success rates for international placements (e.g. in Japan, Germany, Korea). Keep the tone warm, welcoming, and executive.
+
+Output format MUST be strict JSON:
+{
+  "personalizedThankYou": "The warm response text from the Academy Director.",
+  "sentiment": "Positive" | "Neutral" | "Negative"
+}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            personalizedThankYou: { type: Type.STRING },
+            sentiment: { type: Type.STRING }
+          },
+          required: ["personalizedThankYou", "sentiment"]
+        },
+        temperature: 0.6,
+      }
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    res.json(parsed);
+  } catch (error: any) {
+    console.error("Gemini Feedback API Error:", error);
+    res.status(500).json({ error: "Failed to process feedback. Please try again." });
+  }
+});
+
+// -------------------------------------------------------------------------
+// 5. Vite Integration & Static Assets Serving
+// -------------------------------------------------------------------------
+async function startServer() {
+  // Only mount Vite or listen if not in a Vercel/serverless context
+  if (process.env.VERCEL !== "1") {
+    if (process.env.NODE_ENV !== "production") {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(process.cwd(), 'dist');
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    }
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`BIPLOB Platform Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer();
+
+export { app };

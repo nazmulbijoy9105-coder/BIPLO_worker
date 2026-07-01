@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import Header from "./components/Header";
+import FeedbackModal from "./components/FeedbackModal";
 import { 
   TRADE_COURSES, LANGUAGE_COURSES, COUNTRIES, SUCCESS_STORIES, 
   JOBS, MOCK_LESSONS, MOCK_CERTIFICATES 
@@ -87,6 +88,13 @@ export default function App() {
   const [isQuizSubmitted, setIsQuizSubmitted] = useState<boolean>(false);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [unlockedCert, setUnlockedCert] = useState<boolean>(false);
+
+  // Feedback Submission Modal State
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
+  const [feedbackCourseId, setFeedbackCourseId] = useState<string>("");
+  const [feedbackCourseTitle, setFeedbackCourseTitle] = useState<string>("");
+  const [feedbackLessonId, setFeedbackLessonId] = useState<string>("");
+  const [feedbackLessonTitle, setFeedbackLessonTitle] = useState<string>("");
 
   // Certificate Verification State
   const [verificationInput, setVerificationInput] = useState<string>("");
@@ -242,6 +250,22 @@ export default function App() {
     });
     setQuizScore(score);
     setIsQuizSubmitted(true);
+
+    // Auto trigger feedback submission modal
+    const activeCourse = dbCourses.find(c => c.id === activeCourseId) || TRADE_COURSES[0];
+    setFeedbackCourseId(activeCourseId);
+    setFeedbackCourseTitle(activeCourse ? activeCourse.title : "Trade Course");
+    if (activeLesson) {
+      setFeedbackLessonId(activeLesson.id);
+      setFeedbackLessonTitle(activeLesson.title);
+    } else {
+      setFeedbackLessonId("");
+      setFeedbackLessonTitle("");
+    }
+
+    setTimeout(() => {
+      setIsFeedbackOpen(true);
+    }, 1500);
 
     // Track completed lessons
     if (activeLesson) {
@@ -507,6 +531,36 @@ export default function App() {
                   <div className="p-4 border border-black/5 bg-white">
                     <span className="text-3xl font-black tracking-tight block">240+</span>
                     <span className="text-[10px] uppercase tracking-widest text-black/50 font-bold block">Verified Employers</span>
+                  </div>
+                </div>
+
+                {/* Verified Trust Seals */}
+                <div className="mt-6 border border-black/10 bg-[#FAF9F6] p-4" id="verified-trust-seals">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-black/40 block mb-3 text-center sm:text-left">
+                    Verified Trust & Compliance Seals
+                  </span>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col items-center sm:items-start p-2.5 bg-white border border-black/5 hover:border-black/20 transition-all text-center sm:text-left">
+                      <div className="flex items-center space-x-1.5 text-[#B8860B] mb-1">
+                        <ShieldCheck className="w-4 h-4 shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-tight text-black">ISO Certified</span>
+                      </div>
+                      <p className="text-[9px] text-black/50 font-mono">ISO 9001:2015 Quality Standards</p>
+                    </div>
+                    <div className="flex flex-col items-center sm:items-start p-2.5 bg-white border border-black/5 hover:border-black/20 transition-all text-center sm:text-left">
+                      <div className="flex items-center space-x-1.5 text-[#B8860B] mb-1">
+                        <Building className="w-4 h-4 shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-tight text-black">Govt Partner</span>
+                      </div>
+                      <p className="text-[9px] text-black/50 font-mono">Registered Skills Provider</p>
+                    </div>
+                    <div className="flex flex-col items-center sm:items-start p-2.5 bg-white border border-black/5 hover:border-black/20 transition-all text-center sm:text-left">
+                      <div className="flex items-center space-x-1.5 text-[#B8860B] mb-1">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span className="text-[10px] font-bold uppercase tracking-tight text-black">Secure Payments</span>
+                      </div>
+                      <p className="text-[9px] text-black/50 font-mono">100% Secure Fee Shield</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1325,21 +1379,57 @@ export default function App() {
                           </button>
                         ) : (
                           <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full justify-between">
-                            <span className="text-xs font-bold uppercase text-green-700">
-                              Quiz Graded: {quizScore} / {activeLesson.mcqs.length} Correct Responses!
-                            </span>
-                            {currentLessonIndex < currentLessons.length - 1 ? (
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold uppercase text-green-700">
+                                Quiz Graded: {quizScore} / {activeLesson.mcqs.length} Correct Responses!
+                              </span>
+                              <span className="text-[10px] text-black/50 font-serif italic">Auto-requesting lesson feedback...</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3">
                               <button
-                                onClick={handleNextLesson}
-                                className="bg-[#B8860B] hover:bg-[#a07409] text-white font-bold uppercase text-[10px] tracking-widest px-5 py-2.5 transition-all"
+                                onClick={() => {
+                                  const activeCourse = dbCourses.find(c => c.id === activeCourseId) || TRADE_COURSES[0];
+                                  setFeedbackCourseId(activeCourseId);
+                                  setFeedbackCourseTitle(activeCourse ? activeCourse.title : "Trade Program");
+                                  if (activeLesson) {
+                                    setFeedbackLessonId(activeLesson.id);
+                                    setFeedbackLessonTitle(activeLesson.title);
+                                  } else {
+                                    setFeedbackLessonId("");
+                                    setFeedbackLessonTitle("");
+                                  }
+                                  setIsFeedbackOpen(true);
+                                }}
+                                className="border border-black hover:bg-black hover:text-white text-black font-bold uppercase text-[10px] tracking-widest px-4 py-2.5 transition-all"
                               >
-                                Advance to Next Lesson →
+                                Rate Content Quality
                               </button>
-                            ) : (
-                              <div className="bg-green-50 border border-green-200 px-4 py-2 text-xs text-green-800 font-bold uppercase tracking-wider">
-                                🎉 ALL COURSE LESSONS COMPLETED! Certificate Unlocked.
-                              </div>
-                            )}
+                              {currentLessonIndex < currentLessons.length - 1 ? (
+                                <button
+                                  onClick={handleNextLesson}
+                                  className="bg-[#B8860B] hover:bg-[#a07409] text-white font-bold uppercase text-[10px] tracking-widest px-5 py-2.5 transition-all"
+                                >
+                                  Advance to Next Lesson →
+                                </button>
+                              ) : (
+                                <div className="bg-green-50 border border-green-200 px-4 py-2 text-xs text-green-800 font-bold uppercase tracking-wider flex items-center gap-3 flex-wrap">
+                                  <span>🎉 ALL COURSE LESSONS COMPLETED! Certificate Unlocked.</span>
+                                  <button
+                                    onClick={() => {
+                                      const activeCourse = dbCourses.find(c => c.id === activeCourseId) || TRADE_COURSES[0];
+                                      setFeedbackCourseId(activeCourseId);
+                                      setFeedbackCourseTitle(activeCourse ? activeCourse.title : "Trade Program");
+                                      setFeedbackLessonId("");
+                                      setFeedbackLessonTitle("");
+                                      setIsFeedbackOpen(true);
+                                    }}
+                                    className="bg-black hover:bg-black/90 text-white font-bold uppercase text-[9px] tracking-wider px-3 py-1.5 transition-all"
+                                  >
+                                    Submit Course Feedback
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -2337,6 +2427,16 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Course and Quiz Content Feedback Modal */}
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        courseId={feedbackCourseId}
+        courseTitle={feedbackCourseTitle}
+        lessonId={feedbackLessonId}
+        lessonTitle={feedbackLessonTitle}
+      />
 
     </div>
   );
